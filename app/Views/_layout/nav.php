@@ -24,6 +24,11 @@
           </li>
         <?php else: ?>
           <li class="nav-item">
+            <span class="nav-link">
+              Hello <b><?= session('auth')['username']; ?></b>
+            </span>
+          </li>
+          <li class="nav-item">
             <a class="nav-link btn btn-outline-danger me-2" aria-current="page" href="<?= base_url('logout')  ?>">Logout</a>
           </li>
         <?php endif ?>

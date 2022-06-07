@@ -112,6 +112,9 @@ class Product extends BaseController
 
         $data = $this->_post_product();
 
+        // insert id_user
+        $data['id_user'] = session('auth')['id'];
+
         $productModel = new \App\Models\Product();
         $productModel->insert($data);
 
@@ -127,7 +130,15 @@ class Product extends BaseController
         $id = $this->request->getPost('hash');
 
         $productModel = new \App\Models\Product();
-        $product = $productModel->select('name,category,price,photo')->find($id);
+        $product = $productModel->select('name,category,price,photo')->where('id_user', session('auth')['id'])->find($id);
+
+        // check product
+        if (!$product) {
+            return $this->response->setJSON([
+                'status' => false,
+                'response' => 'product invalid, are you tester ?'
+            ]);
+        }
 
         // build hash
         $product['hash'] = $id;
@@ -146,7 +157,7 @@ class Product extends BaseController
         $data = $this->_post_product($id);
 
         $productModel = new \App\Models\Product();
-        $productModel->update($id, $data);
+        $productModel->where('id_user', session('auth')['id'])->update($id, $data);
 
         return $this->response->setJSON([
             'status' => true,
@@ -160,8 +171,18 @@ class Product extends BaseController
         $id = $this->request->getPost('hash');
 
         $productModel = new \App\Models\Product();
+
         // read first
-        $product = $productModel->select('photo')->find($id);
+        $product = $productModel->where('id_user', session('auth')['id'])->select('photo')->find($id);
+
+        // check product
+        if (!$product) {
+            return $this->response->setJSON([
+                'status' => false,
+                'response' => 'product invalid, are you tester ?'
+            ]);
+        }
+
         // then delete
         if ($productModel->delete($id) AND file_exists('./uploads/'.$product['photo'])) {
             // delete photo
@@ -181,8 +202,17 @@ class Product extends BaseController
         $count = count($ids_array);
 
         $productModel = new \App\Models\Product();
+        
         // read first
-        $products = $productModel->select('id,photo')->find($ids_array);
+        $products = $productModel->where('id_user', session('auth')['id'])->select('id,photo')->find($ids_array);
+
+        // check products
+        if (!$products) {
+            return $this->response->setJSON([
+                'status' => false,
+                'response' => 'product invalid, are you tester ?'
+            ]);
+        }        
 
         // then delete one by one
         foreach ($products as $product) {
