@@ -13,6 +13,22 @@
           <a class="nav-link" href="<?= base_url('product')  ?>">Product</a>
         </li>
       </ul>
+
+      <ul class="navbar-nav mb-2 mb-md-0 d-flex">
+        <?php if (!session()->auth): ?>
+          <li class="nav-item">
+            <a class="nav-link" aria-current="page" href="<?= base_url('login')  ?>">Login</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="<?= base_url('register')  ?>">Register</a>
+          </li>
+        <?php else: ?>
+          <li class="nav-item">
+            <a class="nav-link btn btn-outline-danger me-2" aria-current="page" href="<?= base_url('logout')  ?>">Logout</a>
+          </li>
+        <?php endif ?>
+      </ul>
+
     </div>
   </div>
 </nav>

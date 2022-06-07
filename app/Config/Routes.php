@@ -38,14 +38,26 @@ $routes->set404Override();
 // route homepage
 $routes->get('/', 'homepage::index');
 
-// route product
-$routes->get('/product', 'product::index');
-$routes->get('/product/read', 'product::read');
-$routes->post('/product/create', 'product::create');
-$routes->post('/product/edit', 'product::edit');
-$routes->post('/product/update', 'product::update');
-$routes->post('/product/delete', 'product::delete');
-$routes->post('/product/delete_batch', 'product::delete_batch');
+// route product with filter auth
+$routes->group('', ['filter' => 'auth'] ,function ($routes) {
+    $routes->get('/product', 'product::index');
+    $routes->get('/product/read', 'product::read');
+    $routes->post('/product/create', 'product::create');
+    $routes->post('/product/edit', 'product::edit');
+    $routes->post('/product/update', 'product::update');
+    $routes->post('/product/delete', 'product::delete');
+    $routes->post('/product/delete_batch', 'product::delete_batch');
+});
+
+// route auth with filter auth:page
+$routes->group('', ['filter' => 'auth:page'] ,function ($routes) {
+    $routes->get('/login', 'auth::index_login');
+    $routes->post('/login', 'auth::login');
+    $routes->get('/register', 'auth::index_register');
+    $routes->post('/register', 'auth::register');
+});
+
+$routes->get('/logout', 'auth::logout');
 
 /*
  * --------------------------------------------------------------------
