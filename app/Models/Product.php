@@ -65,8 +65,8 @@ class Product extends Model
         // paging query
         $builder->limit($request->getGet('limit'), $request->getGet('offset'));  
  
-        $total = $builder->countAllResults();
         $products = $builder->get()->getResultArray();
+        $total = $builder->where('id_user', session('auth')['id'])->countAllResults();
         $total_filter = count($products);
  
         // load helper
