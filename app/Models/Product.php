@@ -71,21 +71,21 @@ class Product extends Model
  
         // load helper
         helper('number');
+        helper('aeshash');        
  
         // build data
         $data = [];
         foreach ($products as $product) {
             $data[] = array(
-                'hash' => $product['id'],
-                'id' => $product['id'],
+                'hash' => aeshash('enc', $product['id'] , session('auth')['id'] ),
                 'name' => $product['name'],
                 'price' => number_to_currency($product['price'], "IDR", "id", 0),
             );
         }
  
         return [
-            'total' => $total,
-            'totalNotFiltered' => $total_filter,
+            'total' => $total_filter,
+            'totalNotFiltered' => $total,
             'rows' => $data
         ];   
     }
