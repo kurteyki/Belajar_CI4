@@ -83,7 +83,7 @@
     $table.bootstrapTable('destroy').bootstrapTable({
         responseHandler: function(res) {
             $.each(res.rows, function (i, row) {
-                row.state = $.inArray(row.identity, selections) !== -1
+                row.state = $.inArray(row.hash, selections) !== -1
             })
             return res
         },
@@ -123,12 +123,14 @@
             formatter: function(value, row, index) {
                 var html = '';
 
-                html += `<button data-hash="${row.hash}" class='btn btn-primary btn-sm me-1 action-edit'>
-                <i class='bi bi-pencil'></i>
+                html += `
+                <button data-hash="${row.hash}" class='btn btn-primary btn-sm me-1 action-edit'>
+                    <i class='bi bi-pencil'></i>
                 </button>`;
 
-                html += `<button data-name="${row.name}" data-hash="${row.hash}" class='btn btn-danger btn-sm action-delete'>
-                <i class='bi bi-trash'></i>
+                html += `
+                <button data-name="${row.name}" data-hash="${row.hash}" class='btn btn-danger btn-sm action-delete'>
+                    <i class='bi bi-trash'></i>
                 </button>`;
 
                 return html;
@@ -138,7 +140,7 @@
     });
 
     $table.on('load-success.bs.table', function(){
-        
+
         /**
         * Edit Product
         */
@@ -146,62 +148,74 @@
 
             const hash = $(this).data('hash');
 
-            $.post(base_url + `/product/edit`, {hash : hash})
-            .done(function(data){
-                if (data.status) {
+            var loading_dialog = bootbox.dialog({
+                message: '<p class="text-center mb-0">Reading Data, Please Wait...</p>',
+                centerVertical: true,
+                closeButton: false,
+                size: 'medium',
+            }); 
 
-                    // call bootbox
-                    let form_html = '';
-                    form_html += `
-                    <form id="form-product" enctype="multipart/form-data">
+            loading_dialog.init(function(){
+                $.post(base_url + `/product/edit`, {hash : hash})
+                .done(function(data){
 
-                    <div class="mb-3">
-                    <label class="form-label text-capitalize">name</label>
-                    <input value="${data.response.name}" name="name" type="text" class="form-control">
-                    </div>
+                    loading_dialog.modal('hide');
 
-                    <div class="mb-3">
-                    <label class="form-label text-capitalize">category</label>
-                    <input value="${data.response.category}" name="category" type="text" class="form-control">
-                    </div>
+                    if (data.status) {
+                        // call bootbox
+                        let form_html = '';
+                        form_html += `
+                        <form id="form-product" enctype="multipart/form-data">
 
-                    <div class="mb-3">
-                    <label class="form-label text-capitalize">price</label>
-                    <input value="${data.response.price}" name="price" type="number" class="form-control">
-                    </div>
+                            <div class="mb-3">
+                                <label class="form-label text-capitalize">name</label>
+                                <input value="${data.response.name}" name="name" type="text" class="form-control">
+                            </div>
 
-                    <div class="mb-3">
-                    <label class="form-label text-capitalize">new photo</label>
-                    <input value="${data.response.photo}" name="previous_photo" type="hidden" class="form-control">
-                    <input name="photo" type="file" class="form-control">
-                    </div>
+                            <div class="mb-3">
+                                <label class="form-label text-capitalize">category</label>
+                                <input value="${data.response.category}" name="category" type="text" class="form-control">
+                            </div>
 
-                    <input value="${data.response.hash}" name="hash" type="hidden" class="form-control">
-                    <button type="submit" class="btn btn-outline-primary btn-submit">Submit</button>
+                            <div class="mb-3">
+                                <label class="form-label text-capitalize">price</label>
+                                <input value="${data.response.price}" name="price" type="number" class="form-control">
+                            </div>
 
-                    </form>
-                    `;
+                            <div class="mb-3">
+                                <label class="form-label text-capitalize">new photo</label>
+                                <input value="${data.response.photo}" name="previous_photo" type="hidden" class="form-control">
+                                <input name="photo" type="file" class="form-control">
+                            </div>
 
-                    var dialog = bootbox.dialog({
-                        title: `Edit Product ${data.response.name}`,
-                        message: form_html,
-                        centerVertical: true,
-                        closeButton: true,
-                        size: 'medium',
-                        onShown : function(){
+                            <input value="${data.response.hash}" name="hash" type="hidden" class="form-control">
+                            <button type="submit" class="btn btn-outline-primary btn-submit">Submit</button>
 
-                            $("input[name=name]",$("#form-product")).focus();
+                        </form>
+                        `;
 
-                            formProduct(dialog, 'update');
-                        }
-                    });
+                        var dialog = bootbox.dialog({
+                            title: `Edit Product ${data.response.name}`,
+                            message: form_html,
+                            centerVertical: true,
+                            closeButton: true,
+                            size: 'medium',
+                            onShown : function(){
 
-                }else{
-                    alert(data.response);
-                }
-            }).fail(function(xhr, statusText, errorThrown) {   
-                alert(xhr.responseText);
-            });    
+                                $("input[name=name]",$("#form-product")).focus();
+
+                                formProduct(dialog, 'update');
+                            }
+                        });
+
+                    }else{
+                        alert(data.response);
+                    }
+                }).fail(function(xhr, statusText, errorThrown) {   
+                    alert(xhr.responseText);
+                }); 
+            });
+
         })
 
         /**
@@ -239,7 +253,7 @@
 
                         $.post(base_url + `/product/delete`, { hash: hash }, function(data) {}, 'json')
                         .done(function(data){
-                            
+
                             // animation
                             $(".bootbox-accept, .bootbox-cancel").prop("disabled",false);    
                             buttonspinner.remove();
@@ -276,7 +290,7 @@
      $delete.on('click', function(){
 
         var ids = $.map($table.bootstrapTable('getSelections'), function (row) {
-            return row.id
+            return row.hash
         });
 
         // validate
@@ -285,7 +299,7 @@
         // convert 
         ids = ids.join("','");
 
-        bootbox.confirm({
+        let dialog = bootbox.confirm({
             centerVertical: true,
             closeButton: false,
             title: `Confirm Batch Delete`,
@@ -301,17 +315,37 @@
                 }
             },
             callback: function (result) {                
-                if (result) {            
+                if (result) {        
+
+                    // animation
+                    $(".bootbox-accept, .bootbox-cancel").prop("disabled",true);    
+                    $(".bootbox-accept").html($(".bootbox-accept").html() + xsetting.spinner);  
+                    let buttonspinner = $(".button-spinner");    
+
                     $.post(base_url + `/product/delete_batch`, { ids:ids }, function(data) {}, 'json')
                     .done(function(data){
+
+                        // animation
+                        $(".bootbox-accept, .bootbox-cancel").prop("disabled",false);    
+                        buttonspinner.remove();
+                        dialog.modal('hide');
+
                         if (data.status) {
                             $table.bootstrapTable('refresh'); 
                         }
+
                     })
                     .fail(function(xhr, statusText, errorThrown) {
                         alert(xhr.responseText);
+
+                        // animation
+                        $(".bootbox-accept, .bootbox-cancel").prop("disabled",false);    
+                        buttonspinner.remove();                        
+                        dialog.modal('hide');
                     });      
                 }
+
+                return false;
             }
         });
     }); 
@@ -330,27 +364,27 @@ $("#create-product").on("click",function(e){
     form_html += `
     <form id="form-product" enctype="multipart/form-data">
 
-    <div class="mb-3">
-    <label class="form-label text-capitalize">name</label>
-    <input name="name" type="text" class="form-control">
-    </div>
+        <div class="mb-3">
+            <label class="form-label text-capitalize">name</label>
+            <input name="name" type="text" class="form-control">
+        </div>
 
-    <div class="mb-3">
-    <label class="form-label text-capitalize">category</label>
-    <input name="category" type="text" class="form-control">
-    </div>
+        <div class="mb-3">
+            <label class="form-label text-capitalize">category</label>
+            <input name="category" type="text" class="form-control">
+        </div>
 
-    <div class="mb-3">
-    <label class="form-label text-capitalize">price</label>
-    <input name="price" type="number" class="form-control">
-    </div>
+        <div class="mb-3">
+            <label class="form-label text-capitalize">price</label>
+            <input name="price" type="number" class="form-control">
+        </div>
 
-    <div class="mb-3">
-    <label class="form-label text-capitalize">photo</label>
-    <input name="photo" type="file" class="form-control">
-    </div>
+        <div class="mb-3">
+            <label class="form-label text-capitalize">photo</label>
+            <input name="photo" type="file" class="form-control">
+        </div>
 
-    <button type="submit" class="btn btn-outline-primary btn-submit">Submit</button>
+        <button type="submit" class="btn btn-outline-primary btn-submit">Submit</button>
 
     </form>
     `;

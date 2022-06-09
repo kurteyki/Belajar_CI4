@@ -2,54 +2,252 @@
 
 <?= $this->section('content') ?>
 
-<main class="py-5 my-auto">
-    <div class="container">
+<main id="main-page" class="pt-3 pb-5 my-auto">
 
-        <?php if (!$products): ?>
-            <div class="text-center fs-3">
-                There are no products to display yet
-            </div>
-        <?php endif ?>
-
-        <div class="row row-cols-2 row-cols-sm-2 row-cols-md-4 g-3">
-
-            <?php foreach ($products as $product): ?>
-                <!-- make card same height with d-flex align-items-stretch -->
-                <div class="col d-flex align-items-stretch">
-                    <div class="card shadow-sm">
-
-                        <div style="position: relative;">
-                            <img class="bd-placeholder-img card-img-top" src="<?= $product['photo']  ?>">
-                            <span class="badge bg-primary" style="position: absolute;right: 5px;top: 10px;">
-                                <i class="bi bi-hash" style="font-size:10px"></i>
-                                <?= $product['category'] ?>
-                            </span>
-                        </div>
-
-                        <!-- make card same height with d-flex flex-column -->
-                        <div class="card-body d-flex flex-column">
-
-                            <h5 class="card-title pb-2">
-                                <a class="text-decoration-none" href="#">
-                                    <?= $product['name'] ?>
-                                </a>
-                            </h5>
-
-                            <!-- make this element always on bottom when height is not same -->
-                            <div class="d-flex justify-content-between align-items-center mb-1 mt-auto">
-                                <small class="text-muted"><?= $product['price'] ?></small>
-                                <div>
-                                    <i class="bi bi-person-circle"></i> <?= $product['owner']  ?>
-                                </div>
-                            </div>
-
-
-                        </div>
-                    </div>
-                </div>                
-            <?php endforeach ?>
-        </div>  
+    <div class="container-md">    
+        <div id="main-product">
+            <?= view('homepage/product');  ?>
+        </div>
     </div>
+
 </main>
+
+<?= $this->endSection() ?>
+
+<?= $this->section('js') ?>
+
+<script type='text/javascript'>
+
+
+    function productPlaceholder(){
+
+        let placeholder = '';
+
+        for (var i = 1; i <= 12 ; i++) {
+            placeholder += `
+            <div class="col">
+                <div class="card w-100" aria-hidden="true">
+                    <svg class="bd-placeholder-img card-img-top" width="100%" height="150px" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Placeholder" preserveAspectRatio="xMidYMid slice" focusable="false"><title>Placeholder</title><rect width="100%" height="100%" fill="#83b5ff"></rect></svg>
+                    <div class="card-body">
+                        <h5 class="card-title placeholder-glow">
+                            <span class="placeholder col-12 bg-primary"></span>
+                        </h5>
+                        <p class="card-text placeholder-glow d-flex justify-content-between">
+                            <span class="placeholder col-4 bg-primary"></span>
+                            <span class="placeholder col-4 bg-primary"></span>
+                        </p>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        $("#row-product").html(placeholder);
+    }
+
+
+    function PaginationAjax() {
+
+        let click_status = false;
+        $('#pagination').on('click','a',function(e){
+
+            // reverse link action
+            e.preventDefault(); 
+
+            // get href data
+            var href = $(this).attr('href');
+
+            // disable click
+            if (click_status) {return false;}
+            click_status = true;
+
+            // disable pagination
+            $('#pagination li.page-item').addClass('disabled');
+
+            // go to top
+            $('html, body').animate({ scrollTop: 0 }, 0);            
+
+            // placeholder
+            productPlaceholder();
+
+            $.ajax({
+                url: href,
+                type: 'POST',
+                dataType: 'JSON',
+                success: function(data) {
+
+                    // change title
+                    document.title = data.title;
+
+                    // change url history
+                    history.pushState({}, data.title, href);
+
+                    // refresh data
+                    $('#main-product').html(data.content);
+
+                    // re-init because its refresh DOM 
+                    sortProduct();
+                    categoryProduct();
+                    PaginationAjax();
+
+                    // enable click
+                    click_status = false;
+                },error: function(xhr, statusText, errorThrown) {
+                    alert(statusText);
+
+                    // enable pagination
+                    $('#pagination li.page-item').removeClass('disabled');
+
+                    // enable click
+                    click_status = false;                        
+                }
+            });
+
+        });
+    }
+
+    // init for first DOM
+    PaginationAjax(); 
+
+    // for search
+    function searchProduct(){
+        $("#search-product").on("submit", function(e){
+            e.preventDefault();
+
+            const form = $(this),
+            search  = $("#search-product input[name=q]").val();        
+            search_url = (search.length > 0) ? base_url + '?q=' + search : base_url;
+
+            $.ajax({
+                url: search_url,
+                type: 'POST',
+                dataType: 'JSON',
+                success: function(data) {
+
+                    // change title
+                    document.title = data.title;
+
+                    // change url history
+                    history.pushState({}, data.title, search_url);
+
+                    // refresh data
+                    $('#main-product').html(data.content);
+
+                    // re-init because its refresh DOM 
+                    sortProduct();
+                    categoryProduct();
+                    PaginationAjax();                
+
+                },error: function(xhr, statusText, errorThrown) {
+                    alert(statusText);
+                }
+            });
+
+        }); 
+
+        // nav search key up
+        function debounce(callback, wait) {
+            let timeout;
+            return (...args) => {
+                clearTimeout(timeout);
+                timeout = setTimeout(function () { callback.apply(this, args); }, wait);
+            };
+        }
+
+        $("#search-product input[name=q]").on("keyup search", debounce(() => {
+            $('#search-product').submit();  
+        },2000));        
+    }
+
+    // init nav search
+    searchProduct();   
+
+    function sortProduct(){
+        $('#sort-product').on('change', function() {
+            const sort = this.value;
+            const category  = $('#category-product').val();            
+            const search  = $("#search-product input[name=q]").val();        
+
+            // build url
+            let build_url;
+            if (search.length > 0) {
+                build_url = base_url + '?q=' + search +'&sort=' + sort;
+            }else if (category.length > 0) {
+                build_url = base_url + '?category=' + category +'&sort=' + sort;
+            }else{
+                build_url = base_url + '?sort=' + sort;
+            }
+
+            // placeholder
+            productPlaceholder();
+            
+            $.ajax({
+                url: build_url,
+                type: 'POST',
+                dataType: 'JSON',
+                success: function(data) {
+
+                    // change title
+                    document.title = data.title;
+
+                    // change url history
+                    history.pushState({}, data.title, build_url);
+
+                    // refresh data
+                    $('#main-product').html(data.content);
+
+                    // re-init because its refresh DOM 
+                    sortProduct();
+                    categoryProduct();
+                    PaginationAjax();
+
+                },error: function(xhr, statusText, errorThrown) {
+                    alert(statusText);
+                }
+            });
+        });        
+    }
+
+    // init sortProduct
+    sortProduct();
+
+    function categoryProduct(){
+        $('#category-product').on('change', function() {
+            const category = this.value;
+            const sort  = $('#sort-product').val();
+            const build_url = (category.length > 0) ? base_url + '?category=' + category +'&sort=' + sort : base_url + '?sort=' + sort;
+
+            // placeholder
+            productPlaceholder();
+            
+            $.ajax({
+                url: build_url,
+                type: 'POST',
+                dataType: 'JSON',
+                success: function(data) {
+
+                    // change title
+                    document.title = data.title;
+
+                    // change url history
+                    history.pushState({}, data.title, build_url);
+
+                    // refresh data
+                    $('#main-product').html(data.content);
+
+                    // re-init because its refresh DOM 
+                    sortProduct();
+                    categoryProduct();
+                    PaginationAjax();
+
+                },error: function(xhr, statusText, errorThrown) {
+                    alert(statusText);
+                }
+            });
+        });        
+    }
+
+    // init categoryProduct
+    categoryProduct();    
+</script>
 
 <?= $this->endSection() ?>

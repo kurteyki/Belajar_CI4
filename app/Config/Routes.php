@@ -37,6 +37,7 @@ $routes->set404Override();
 // route since we don't have to scan directories.
 // route homepage
 $routes->get('/', 'homepage::index');
+$routes->post('/', 'homepage::index');
 
 // route product with filter auth
 $routes->group('', ['filter' => 'auth'] ,function ($routes) {
