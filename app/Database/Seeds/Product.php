@@ -24,7 +24,7 @@ class Product extends Seeder
 
         // build random data
         $data = [];
-        for ($i=0; $i < 100 ; $i++) { 
+        for ($i=0; $i < 100000 ; $i++) { 
 
             $name = "{Jual|Jasa|Tutor|Script|Great} {membuat|menjadi|pasti} {A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z}";
             $name_spin = preg_replace_callback("/\{([^}]+)\}/", $replacement, $name); 

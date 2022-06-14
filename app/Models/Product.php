@@ -105,8 +105,8 @@ class Product extends Model
         }
         
         return [
-        'total' => $total_filter,
-        'totalNotFiltered' => $total,
+        'total' => $total,
+        'totalNotFiltered' => $total_filter,
         'rows' => $data
         ];   
     }

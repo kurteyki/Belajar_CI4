@@ -15,7 +15,7 @@ class User extends Seeder
 
         // build random data
         $data = [];
-        for ($i=0; $i < 10 ; $i++) { 
+        for ($i=0; $i < 1 ; $i++) { 
 
             $username = "{alexander|bizku|ciku|lazzy|waaazu|keila|omen}";
             $username_spin = preg_replace_callback("/\{([^}]+)\}/", $replacement, $username);
